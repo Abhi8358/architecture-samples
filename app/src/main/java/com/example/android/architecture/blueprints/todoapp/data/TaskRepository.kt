@@ -39,6 +39,8 @@ interface TaskRepository {
 
     suspend fun updateTask(taskId: String, title: String, description: String)
 
+    suspend fun updateCompletedTaskTime(taskId: String, updatedTime: Long, isTimeUpdated: Boolean = true)
+
     suspend fun completeTask(taskId: String)
 
     suspend fun activateTask(taskId: String)

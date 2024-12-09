@@ -32,6 +32,8 @@ data class Task(
     val description: String = "",
     val isCompleted: Boolean = false,
     val id: String,
+    val updatedTime: Long = 0L,
+    val isTimeUpdated: Boolean = true
 ) {
 
     val titleForList: String

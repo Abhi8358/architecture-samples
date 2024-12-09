@@ -32,7 +32,7 @@ androidxWindowManager = "1.0.0"
 androidxWork = "2.7.1"
 coil = "2.2.2"
 # @keep
-compileSdk = "33"
+compileSdk = "34"
 hamcrest = "1.3"
 hilt = "2.44.2"
 hiltExt = "1.0.0"
@@ -55,9 +55,10 @@ room = "2.5.0-rc01"
 spotless = "5.12.5"
 timber = "5.0.1"
 # @keep
-targetSdk = "33"
+targetSdk = "34"
 truth = "1.1.2"
 turbine = "0.12.1"
+foundationAndroid = "1.5.1"
 
 [libraries]
 accompanist-appcompat-theme = { group = "com.google.accompanist", name = "accompanist-appcompat-theme", version.ref = "accompanist" }
@@ -140,6 +141,7 @@ timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "tim
 # Dependencies of the included build-logic
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

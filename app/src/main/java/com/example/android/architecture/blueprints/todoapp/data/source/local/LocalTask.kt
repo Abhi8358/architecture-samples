@@ -34,4 +34,6 @@ data class LocalTask(
     var title: String,
     var description: String,
     var isCompleted: Boolean,
+    var updatedTime: Long = 0L,
+    var isTimeUpdated: Boolean = true
 )

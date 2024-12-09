@@ -31,6 +31,7 @@ import com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType
 import com.example.android.architecture.blueprints.todoapp.util.Async
 import com.example.android.architecture.blueprints.todoapp.util.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -99,6 +100,15 @@ class TasksViewModel @Inject constructor(
             initialValue = TasksUiState(isLoading = true)
         )
 
+    val bottomCarousalList = listOf(
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10.png",
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/11.png",
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/12.png"
+    )
+
+    //https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10.png
+//https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/11.png
+//https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/12.png
     fun setFiltering(requestType: TasksFilterType) {
         savedStateHandle[TASKS_FILTER_SAVED_STATE_KEY] = requestType
     }
@@ -114,10 +124,18 @@ class TasksViewModel @Inject constructor(
     fun completeTask(task: Task, completed: Boolean) = viewModelScope.launch {
         if (completed) {
             taskRepository.completeTask(task.id)
+            updateDebounceTimeForCheckedUncheckedTask(task)
             showSnackbarMessage(R.string.task_marked_complete)
         } else {
             taskRepository.activateTask(task.id)
             showSnackbarMessage(R.string.task_marked_active)
+        }
+    }
+
+    private fun updateDebounceTimeForCheckedUncheckedTask(task: Task) {
+        viewModelScope.launch {
+            delay(2000)
+            taskRepository.updateCompletedTaskTime(task.id, System.currentTimeMillis(), true)
         }
     }
 

@@ -18,13 +18,19 @@ package com.example.android.architecture.blueprints.todoapp.tasks
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -43,9 +49,14 @@ import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -53,9 +64,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.android.architecture.blueprints.todoapp.R
+import com.example.android.architecture.blueprints.todoapp.components.BannerCarousel
 import com.example.android.architecture.blueprints.todoapp.data.Task
 import com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType.ACTIVE_TASKS
 import com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType.ALL_TASKS
@@ -63,8 +75,10 @@ import com.example.android.architecture.blueprints.todoapp.tasks.TasksFilterType
 import com.example.android.architecture.blueprints.todoapp.util.LoadingContent
 import com.example.android.architecture.blueprints.todoapp.util.TasksTopAppBar
 import com.google.accompanist.appcompattheme.AppCompatTheme
+import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalLifecycleComposeApi::class)
+
+
 @Composable
 fun TasksScreen(
     @StringRes userMessage: Int,
@@ -106,7 +120,8 @@ fun TasksScreen(
             onRefresh = viewModel::refresh,
             onTaskClick = onTaskClick,
             onTaskCheckedChange = viewModel::completeTask,
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier.padding(paddingValues),
+            bottomCarousalList = viewModel.bottomCarousalList
         )
 
         // Check for user messages to display on the screen
@@ -139,7 +154,8 @@ private fun TasksContent(
     onRefresh: () -> Unit,
     onTaskClick: (Task) -> Unit,
     onTaskCheckedChange: (Task, Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    bottomCarousalList: List<String>
 ) {
     LoadingContent(
         loading = loading,
@@ -147,28 +163,41 @@ private fun TasksContent(
         emptyContent = { TasksEmptyContent(noTasksLabel, noTasksIconRes, modifier) },
         onRefresh = onRefresh
     ) {
-        Column(
+        Box(
             modifier = modifier
                 .fillMaxSize()
-                .padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin))
         ) {
-            Text(
-                text = stringResource(currentFilteringLabel),
-                modifier = Modifier.padding(
-                    horizontal = dimensionResource(id = R.dimen.list_item_padding),
-                    vertical = dimensionResource(id = R.dimen.vertical_margin)
-                ),
-                style = MaterialTheme.typography.h6
-            )
-            LazyColumn {
-                items(tasks) { task ->
-                    TaskItem(
-                        task = task,
-                        onTaskClick = onTaskClick,
-                        onCheckedChange = { onTaskCheckedChange(task, it) }
-                    )
+            Column(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(bottom = 70.dp)
+                    .padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin))
+            ) {
+                Text(
+                    text = stringResource(currentFilteringLabel),
+                    modifier = Modifier.padding(
+                        horizontal = dimensionResource(id = R.dimen.list_item_padding),
+                        vertical = dimensionResource(id = R.dimen.vertical_margin)
+                    ),
+                    style = MaterialTheme.typography.h6
+                )
+                LazyColumn {
+                    items(tasks) { task ->
+                        TaskItem(
+                            task = task,
+                            onTaskClick = onTaskClick,
+                            onCheckedChange = { onTaskCheckedChange(task, it) }
+                        )
+                    }
                 }
             }
+
+            BannerCarousel(
+                modifier = Modifier
+                    .height(68.dp)
+                    .padding(4.dp)
+                    .align(Alignment.BottomCenter), imageUrls = bottomCarousalList
+            )
         }
     }
 }
@@ -179,6 +208,30 @@ private fun TaskItem(
     onCheckedChange: (Boolean) -> Unit,
     onTaskClick: (Task) -> Unit
 ) {
+
+    var backgroundColor by remember { mutableStateOf(Color.White) }
+
+    var animationState by remember { mutableStateOf(AnimationState.Idle) }
+
+    LaunchedEffect(key1 = task, key2 = animationState) {
+        when (animationState) {
+            AnimationState.Checked -> {
+                backgroundColor = Color.LightGray
+                delay(250)
+                backgroundColor = Color.White
+                animationState = AnimationState.Idle
+            }
+            AnimationState.Unchecked -> {
+                backgroundColor = Color.LightGray
+                delay(250)
+                backgroundColor = Color.White
+                animationState = AnimationState.Idle
+            }
+            AnimationState.Idle -> {}
+        }
+    }
+    println("time diff ${(System.currentTimeMillis() - task.updatedTime)<1000}")
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -188,21 +241,37 @@ private fun TaskItem(
                 vertical = dimensionResource(id = R.dimen.list_item_padding),
             )
             .clickable { onTaskClick(task) }
+            .background(backgroundColor)
     ) {
         Checkbox(
             checked = task.isCompleted,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = {
+                onCheckedChange.invoke(it)
+                animationState = if (it) {
+                    AnimationState.Checked
+                } else {
+                    AnimationState.Unchecked
+                }
+            }
         )
+        println("recomposition $task")
         Text(
             text = task.titleForList,
             style = MaterialTheme.typography.h6,
-            modifier = Modifier.padding(
-                start = dimensionResource(id = R.dimen.horizontal_margin)
-            ),
+            modifier = Modifier
+                .padding(
+                    start = dimensionResource(id = R.dimen.horizontal_margin)
+                )
+                .animateContentSize(),
+            color = animateColorAsState(
+                targetValue = if (task.isCompleted) Color.Gray else Color.Black, label = "ColorAnimation"
+            ).value,
             textDecoration = if (task.isCompleted) {
+                println("inside text ${task.isCompleted}")
                 TextDecoration.LineThrough
             } else {
-                null
+                println("inside text 2 ${task.isCompleted}")
+                TextDecoration.None
             }
         )
     }
@@ -273,6 +342,7 @@ private fun TasksContentPreview() {
                 onRefresh = { },
                 onTaskClick = { },
                 onTaskCheckedChange = { _, _ -> },
+                bottomCarousalList = listOf("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10.png")
             )
         }
     }
@@ -292,6 +362,7 @@ private fun TasksContentEmptyPreview() {
                 onRefresh = { },
                 onTaskClick = { },
                 onTaskCheckedChange = { _, _ -> },
+                bottomCarousalList = listOf("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10.png")
             )
         }
     }
@@ -345,4 +416,10 @@ private fun TaskItemCompletedPreview() {
             )
         }
     }
+}
+
+enum class AnimationState {
+    Idle,
+    Checked,
+    Unchecked
 }

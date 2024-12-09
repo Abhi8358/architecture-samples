@@ -121,7 +121,11 @@ dependencies {
     // Architecture Components
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+   // implementation(libs.androidx.foundation.android)
+   // implementation("com.google.accompanist:accompanist-pager-indicators:0.30.1")
+    implementation(libs.androidx.foundation.android)
     ksp(libs.room.compiler)
+    implementation(libs.coil.kt.compose)
     implementation(libs.androidx.lifecycle.runtimeCompose)
     implementation(libs.androidx.lifecycle.viewModelCompose)
 
