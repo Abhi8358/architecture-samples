@@ -83,8 +83,11 @@ interface TaskDao {
      * @param taskId id of the task
      * @param completed status to be updated
      */
-    @Query("UPDATE task SET isCompleted = :completed WHERE id = :taskId")
-    suspend fun updateCompleted(taskId: String, completed: Boolean)
+    @Query("UPDATE task SET isCompleted = :completed , isTimeUpdated = :isTimeUpdated WHERE id = :taskId")
+    suspend fun updateCompleted(taskId: String, completed: Boolean, isTimeUpdated: Boolean)
+
+    @Query("UPDATE task SET isCompleted = :completed , isTimeUpdated = :isTimeUpdated, updatedTime = :updatedTime WHERE id = :taskId")
+    suspend fun updateUnChecked(taskId: String, completed: Boolean, isTimeUpdated: Boolean, updatedTime: Long)
 
     /**
      * Delete a task by id.

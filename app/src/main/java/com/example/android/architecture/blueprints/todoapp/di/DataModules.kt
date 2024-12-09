@@ -18,6 +18,8 @@ package com.example.android.architecture.blueprints.todoapp.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.android.architecture.blueprints.todoapp.data.DefaultTaskRepository
 import com.example.android.architecture.blueprints.todoapp.data.TaskRepository
 import com.example.android.architecture.blueprints.todoapp.data.source.local.TaskDao
@@ -54,6 +56,13 @@ abstract class DataSourceModule {
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    private val MIGRATION_1_2 = object : Migration(1, 2) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Add the new columns with default values
+            database.execSQL("ALTER TABLE task ADD COLUMN updatedTime INTEGER NOT NULL DEFAULT 0")
+            database.execSQL("ALTER TABLE task ADD COLUMN isTimeUpdated INTEGER NOT NULL DEFAULT 1")
+        }
+    }
     @Singleton
     @Provides
     fun provideDataBase(@ApplicationContext context: Context): ToDoDatabase {
@@ -61,7 +70,7 @@ object DatabaseModule {
             context.applicationContext,
             ToDoDatabase::class.java,
             "Tasks.db"
-        ).build()
+        ).addMigrations(MIGRATION_1_2).build()
     }
 
     @Provides

@@ -58,6 +58,8 @@ class DefaultTaskRepository @Inject constructor(
             title = title,
             description = description,
             id = taskId,
+            isTimeUpdated = true,
+            updatedTime = System.currentTimeMillis()
         )
         localDataSource.upsert(task.toLocal())
         saveTasksToNetwork()
@@ -67,9 +69,23 @@ class DefaultTaskRepository @Inject constructor(
     override suspend fun updateTask(taskId: String, title: String, description: String) {
         val task = getTask(taskId)?.copy(
             title = title,
-            description = description
+            description = description,
+            isTimeUpdated = false
         ) ?: throw Exception("Task (id $taskId) not found")
 
+        localDataSource.upsert(task.toLocal())
+        saveTasksToNetwork()
+    }
+
+    override suspend fun updateCompletedTaskTime(
+        taskId: String,
+        updatedTime: Long,
+        isTimeUpdated: Boolean
+    ) {
+        val task = getTask(taskId)?.copy(
+            updatedTime = System.currentTimeMillis(),
+            isTimeUpdated = true
+        ) ?: throw Exception("Task (id $taskId) not found")
         localDataSource.upsert(task.toLocal())
         saveTasksToNetwork()
     }
@@ -83,10 +99,24 @@ class DefaultTaskRepository @Inject constructor(
         }
     }
 
+
+
     override fun getTasksStream(): Flow<List<Task>> {
+
         return localDataSource.observeAll().map { tasks ->
             withContext(dispatcher) {
-                tasks.toExternal()
+                tasks.toExternal().sortedWith(
+                    compareBy<Task> {
+                        println("isTimeUpdated $it")
+                        it.isCompleted && it.isTimeUpdated
+                    }.thenByDescending {
+                        if (it.isCompleted && it.isTimeUpdated) {
+                            System.currentTimeMillis() - it.updatedTime
+                        } else {
+                            it.updatedTime
+                        }
+                    }
+                )
             }
         }
     }
@@ -113,12 +143,12 @@ class DefaultTaskRepository @Inject constructor(
     }
 
     override suspend fun completeTask(taskId: String) {
-        localDataSource.updateCompleted(taskId = taskId, completed = true)
+        localDataSource.updateCompleted(taskId = taskId, completed = true, isTimeUpdated = false)
         saveTasksToNetwork()
     }
 
     override suspend fun activateTask(taskId: String) {
-        localDataSource.updateCompleted(taskId = taskId, completed = false)
+        localDataSource.updateUnChecked(taskId = taskId, completed = false, isTimeUpdated = true, System.currentTimeMillis())
         saveTasksToNetwork()
     }
 
